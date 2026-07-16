@@ -2,23 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>111 Peluquería Dani - Reservas</title>
-    <!-- Aquí irían tus estilos CSS actuales, mantén los que ya tenías -->
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-    </style>
+    <title>Master Web - Panel de Control</title>
 </head>
 <body>
+    <h1>Panel de Control Master Web</h1>
+    <div id="app">Cargando datos...</div>
 
-    <!-- TODO TU CONTENIDO ACTUAL DE LA PÁGINA IRÍA AQUÍ -->
-    <h1>Bienvenido a Peluquería Dani</h1>
-    <p>Realiza tus reservas aquí.</p>
-
-    <!-- ESTE ES EL CÓDIGO QUE "VIGILA" EL ESTADO -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDCN2ah_fSjW385KgAb48W8Cd9PhFDOQJ0",
@@ -32,23 +24,36 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const colRef = collection(db, "clientes_servicios");
+        const appContainer = document.getElementById('app');
 
-        // Vigilamos el documento 'unasdani' en la colección 'clientes_servicios'
-        const docRef = doc(db, "clientes_servicios", "unasdani");
-
-        onSnapshot(docRef, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data();
-                // Si 'activo' es falso, mostramos mensaje de bloqueo
-                if (data.activo === false) {
-                    document.body.innerHTML = `
-                        <div style="text-align:center; padding: 50px; font-family: sans-serif;">
-                            <h1>Servicio Temporalmente Inactivo</h1>
-                            <p>Lo sentimos, este servicio no está disponible en este momento.</p>
-                        </div>
-                    `;
-                }
+        onSnapshot(colRef, (snapshot) => {
+            appContainer.innerHTML = '';
+            if (snapshot.empty) {
+                appContainer.innerHTML = 'No hay clientes encontrados en la base de datos.';
+                return;
             }
+            
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const id = docSnap.id;
+                
+                const btn = document.createElement('button');
+                btn.innerText = (data.nombre || id) + " (" + (data.activo ? "ACTIVO" : "APAGADO") + ")";
+                btn.style.backgroundColor = data.activo ? "#4CAF50" : "#808080";
+                btn.style.color = "white";
+                btn.style.padding = "20px";
+                btn.style.margin = "10px";
+                btn.style.cursor = "pointer";
+
+                btn.onclick = async () => {
+                    const docRef = doc(db, "clientes_servicios", id);
+                    await updateDoc(docRef, { activo: !data.activo });
+                };
+                appContainer.appendChild(btn);
+            });
+        }, (error) => {
+            appContainer.innerHTML = 'Error al conectar: ' + error.message;
         });
     </script>
 </body>
