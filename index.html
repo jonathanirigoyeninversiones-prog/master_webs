@@ -2,16 +2,33 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>111 Master Web - Panel de Control</title>
+    <title>Master Web - Panel de Control</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 350px; }
+        h1 { color: #333; font-size: 20px; margin-bottom: 20px; }
+        .switch-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 20px; }
+        /* Switch elegante */
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #d4af37; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        #label-estado { font-weight: bold; color: #555; }
+    </style>
 </head>
 <body>
-    <h1>Proyecto: Master-Web-Admin</h1>
-    <h3>Estado del sitio Albani Vegas:</h3>
-    
-    <!-- He cambiado el botón por un checkbox -->
-    <div style="font-size: 24px;">
-        <input type="checkbox" id="check-estado" onclick="cambiarEstado()" style="width: 30px; height: 30px; cursor: pointer;">
-        <label for="check-estado" id="label-estado">Cargando...</label>
+    <div class="card">
+        <h1>Centro de Control: Master-Web</h1>
+        <p>Estado de Albani Vegas:</p>
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="check-estado" onclick="cambiarEstado()">
+                <span class="slider"></span>
+            </label>
+            <span id="label-estado">Cargando...</span>
+        </div>
     </div>
 
     <script type="module">
@@ -38,14 +55,14 @@
             if (docSnap.exists()) {
                 const activo = docSnap.data().activo;
                 checkbox.checked = activo;
-                label.innerText = activo ? " SITIO ACTIVO" : " SITIO APAGADO";
+                label.innerText = activo ? "SITIO ACTIVO" : "SITIO APAGADO";
             }
         }
 
         window.cambiarEstado = async () => {
             const nuevoEstado = checkbox.checked;
             await updateDoc(docRef, { activo: nuevoEstado });
-            label.innerText = nuevoEstado ? " SITIO ACTIVO" : " SITIO APAGADO";
+            label.innerText = nuevoEstado ? "SITIO ACTIVO" : "SITIO APAGADO";
         };
 
         cargarEstado();
