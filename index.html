@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Web - Panel Maestro</title>
+    <title>zzz Master Web - Panel Maestro</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
@@ -52,7 +52,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Al cargar la página, cerramos sesión para obligar a pedir login siempre
+        // Obliga a cerrar sesión al entrar o refrescar
         window.onload = () => { signOut(auth); };
 
         window.login = async () => {
@@ -94,6 +94,7 @@
         };
 
         window.cambiarEstado = async (id, nuevoEstado) => {
+            // Guardamos el booleano exacto (true o false)
             await updateDoc(doc(db, "Master_web", id), { activo: nuevoEstado });
         };
     </script>
