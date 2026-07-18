@@ -2,18 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Master Web - Panel de Control</title>
+    <title>111 Master Web - Panel de Control</title>
 </head>
 <body>
     <h1>Proyecto: Master-Web-Admin</h1>
     <h3>Estado del sitio Albani Vegas:</h3>
-    <button id="btn-estado" onclick="cambiarEstado()" style="padding: 20px; font-size: 20px; cursor: pointer;">Cargando...</button>
+    
+    <!-- He cambiado el botón por un checkbox -->
+    <div style="font-size: 24px;">
+        <input type="checkbox" id="check-estado" onclick="cambiarEstado()" style="width: 30px; height: 30px; cursor: pointer;">
+        <label for="check-estado" id="label-estado">Cargando...</label>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-        // PEGA AQUÍ TU CONFIGURACIÓN DE MASTER-WEB-ADMIN
         const firebaseConfig = {
             apiKey: "AIzaSyA0DzUikltEZ4Iu1a3aRkCRr68jzuoTUyQ",
             authDomain: "master-web-admin.firebaseapp.com",
@@ -26,26 +30,22 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const docRef = doc(db, "Master_web", "albani_vegas");
-        let estadoActual = true;
+        const checkbox = document.getElementById('check-estado');
+        const label = document.getElementById('label-estado');
 
         async function cargarEstado() {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                estadoActual = docSnap.data().activo;
-                actualizarBoton();
+                const activo = docSnap.data().activo;
+                checkbox.checked = activo;
+                label.innerText = activo ? " SITIO ACTIVO" : " SITIO APAGADO";
             }
         }
 
-        function actualizarBoton() {
-            const btn = document.getElementById('btn-estado');
-            btn.innerText = estadoActual ? "✅ SITIO ACTIVO" : "❌ SITIO APAGADO";
-            btn.style.backgroundColor = estadoActual ? "#90EE90" : "#FFB6C1";
-        }
-
         window.cambiarEstado = async () => {
-            estadoActual = !estadoActual;
-            await updateDoc(docRef, { activo: estadoActual });
-            actualizarBoton();
+            const nuevoEstado = checkbox.checked;
+            await updateDoc(docRef, { activo: nuevoEstado });
+            label.innerText = nuevoEstado ? " SITIO ACTIVO" : " SITIO APAGADO";
         };
 
         cargarEstado();
