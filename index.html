@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Web - Panel Maestro</title>
+    <title>111 Master Web - Panel Maestro</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { font-size: 18px; color: #333; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         td { padding: 10px; border-bottom: 1px solid #eee; }
         .orden-input { width: 40px; padding: 5px; text-align: center; border: 1px solid #ddd; }
-        button { width: 100%; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
         #panel-control { display: none; }
     </style>
 </head>
@@ -27,7 +28,7 @@
     <div class="card" id="panel-control">
         <h1>Gestión de Proyectos</h1>
         <table id="tabla-proyectos">
-            <!-- Los proyectos se cargarán aquí automáticamente -->
+            <!-- Los proyectos se cargarán aquí -->
         </table>
         <button onclick="location.reload()">Actualizar lista</button>
     </div>
@@ -52,26 +53,32 @@
         const auth = getAuth(app);
 
         window.login = async () => {
-            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value); }
+            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value.trim(), document.getElementById('pass').value); }
             catch (e) { alert("Error: " + e.message); }
         };
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('panel-control').style.display = 'block';
+        const cargarDatos = async () => {
+            try {
                 const q = query(collection(db, "Master_web"), orderBy("orden", "asc"));
                 const querySnapshot = await getDocs(q);
                 let html = "<tr><th>Orden</th><th>Proyecto</th><th>Activo</th></tr>";
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     html += `<tr>
-                        <td><input type="number" class="orden-input" value="${data.orden}" onchange="cambiarOrden('${doc.id}', this.value)"></td>
-                        <td>${data.nombre}</td>
+                        <td><input type="number" class="orden-input" value="${data.orden || 0}" onchange="cambiarOrden('${doc.id}', this.value)"></td>
+                        <td>${data.nombre || 'Sin nombre'}</td>
                         <td><input type="checkbox" ${data.activo ? 'checked' : ''} onchange="cambiarEstado('${doc.id}', this.checked)"></td>
                     </tr>`;
                 });
                 document.getElementById('tabla-proyectos').innerHTML = html;
+            } catch (e) { console.error("Error:", e); }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('panel-control').style.display = 'block';
+                cargarDatos();
             }
         });
 
