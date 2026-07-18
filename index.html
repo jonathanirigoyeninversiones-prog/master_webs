@@ -2,100 +2,96 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Web - Panel Maestro</title>
+    <title>Reserva de Citas - Albai Vega</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; display: flex; justify-content: center; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h1 { font-size: 18px; color: #333; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        .orden-input { width: 40px; padding: 5px; text-align: center; border: 1px solid #ddd; }
-        #panel-control { display: none; }
+        :root { --bg-color: #f2f1ed; --text-color: #333; --card-bg: rgba(255, 255, 255, 0.95); --border-color: #d4af37; }
+        [data-theme="dark"] { --bg-color: #1a1a1a; --text-color: #f2f1ed; --card-bg: rgba(40, 40, 40, 0.95); --border-color: #d4af37; }
+        body { background-color: var(--bg-color); color: var(--text-color); background-image: url('https://jonathanirigoyeninversiones-prog.github.io/albani_vegas/logo_albani_vegas.jpeg'); background-size: contain; background-repeat: no-repeat; background-position: center; min-height: 100vh; margin: 0; font-family: sans-serif; transition: 0.3s; }
+        .theme-toggle { position: fixed; top: 10px; right: 10px; cursor: pointer; font-size: 24px; z-index: 1000; }
+        .container { background: var(--card-bg); color: var(--text-color); padding: 30px; border-radius: 15px; max-width: 600px; margin: 40px auto; transition: 0.3s; }
+        .btn-cat, .btn-sub { padding: 10px; margin: 5px; cursor: pointer; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); border-radius: 5px; }
+        .btn-cat:hover, .btn-sub:hover { background: var(--border-color); color: #fff; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; background: var(--bg-color); color: var(--text-color); }
     </style>
 </head>
-<body>
-
-    <div class="card" id="login-screen">
-        <h1>Acceso Autorizado</h1>
-        <input type="email" id="email" placeholder="Correo">
-        <input type="password" id="pass" placeholder="Contraseña">
-        <button onclick="login()">Entrar</button>
+<body data-theme="dark">
+    <div class="theme-toggle" onclick="toggleTheme()">☀️/🌙</div>
+    <div class="container" id="contenido-principal">
+        <h3>Reserva tu cita</h3>
+        <input type="date" id="fecha-cita" onchange="validarDia()">
+        <div id="msg-dia"></div>
+        <div id="categorias-container" style="display:none; margin-top: 20px;"></div>
+        <div id="subcategorias-container" style="display:none; margin-top: 20px;"></div>
+        <div id="formulario-reserva" style="display:none; margin-top: 20px;">
+            <input type="text" id="nombre" placeholder="Nombre">
+            <input type="text" id="apellido" placeholder="Apellido">
+            <input type="tel" id="telefono" placeholder="Teléfono">
+            <input type="text" id="direccion" placeholder="Dirección">
+            <button class="btn-cat" onclick="solicitarCita()">Solicitar Cita</button>
+        </div>
     </div>
 
-    <div class="card" id="panel-control">
-        <h1>Gestión de Proyectos</h1>
-        <table id="tabla-proyectos">
-            <tr><th>Orden</th><th>Proyecto</th><th>Activo</th></tr>
-        </table>
-        <button onclick="cargarDatos()">Refrescar Lista</button>
-    </div>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        }
+    </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-        const firebaseConfig = { 
-            apiKey: "AIzaSyA0DzUiklteZ4Iu1a3aRkCRr68jzuoTUyQ",
-            authDomain: "master-web-admin.firebaseapp.com",
-            projectId: "master-web-admin",
-            storageBucket: "master-web-admin.firebasestorage.app",
-            messagingSenderId: "641570363282",
-            appId: "1:641570363282:web:b027b5c4c036a550b8534b",
-            measurementId: "G-M9BXZLJGKJ"
-        };
+        const configOriginal = {apiKey: "AIzaSyCqTluO4X3TScWCi1MuVaCh3_95H1S-EPw", authDomain: "albany-vegas.firebaseapp.com", projectId: "albany-vegas", storageBucket: "albany-vegas.firebasestorage.app", messagingSenderId: "733658747319", appId: "1:733658747319:web:189e5aaaf73beec19f9832"};
+        const db = getFirestore(initializeApp(configOriginal, "original"));
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        const configControl = {apiKey: "AIzaSyA0DzUikltEZ4Iu1a3aRkCRr68jzuoTUyQ", authDomain: "master-web-admin.firebaseapp.com", projectId: "master-web-admin", storageBucket: "master-web-admin.firebasestorage.app", messagingSenderId: "641570363282", appId: "1:641570363282:web:b027b5c4c036a550b8534b"};
+        const dbControl = getFirestore(initializeApp(configControl, "control"));
 
-        window.onload = () => { signOut(auth); };
-
-        window.login = async () => {
-            try { 
-                await signInWithEmailAndPassword(auth, document.getElementById('email').value.trim(), document.getElementById('pass').value); 
-            } catch (e) { alert("Error de acceso: " + e.message); }
-        };
-
-        window.cargarDatos = async () => {
+        async function verificarAcceso() {
             try {
-                const q = query(collection(db, "Master_web"), orderBy("orden", "asc"));
-                const querySnapshot = await getDocs(q);
-                let html = "<tr><th>Orden</th><th>Proyecto</th><th>Activo</th></tr>";
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    html += `<tr>
-                        <td><input type="number" class="orden-input" value="${data.orden || 0}" onchange="cambiarOrden('${doc.id}', this.value)"></td>
-                        <td>${data.nombre || 'Sin nombre'}</td>
-                        <td><input type="checkbox" ${data.activo ? 'checked' : ''} onchange="cambiarEstado('${doc.id}', this.checked)"></td>
-                    </tr>`;
-                });
-                document.getElementById('tabla-proyectos').innerHTML = html;
-            } catch (e) { console.error("Error al cargar:", e); }
+                const docSnap = await getDoc(doc(dbControl, "Master_web", "albani_vegas"));
+                if (docSnap.exists() && docSnap.data().activo === false) {
+                    document.getElementById('contenido-principal').innerHTML = "<h2 style='text-align:center; padding:50px;'>Sitio en mantenimiento. Vuelva pronto.</h2>";
+                }
+            } catch (e) { console.error(e); }
+        }
+        verificarAcceso();
+
+        document.getElementById('fecha-cita').setAttribute('min', new Date().toISOString().split('T')[0]);
+        
+        window.validarDia = async () => {
+            const fechaVal = document.getElementById('fecha-cita').value;
+            const msg = document.getElementById('msg-dia');
+            const fechaSel = new Date(fechaVal + 'T00:00:00');
+            const hoy = new Date(); hoy.setHours(0,0,0,0);
+            if (fechaSel < hoy) { msg.innerHTML = "No se puede reservar en días pasados."; return; }
+            
+            const diaNombre = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][fechaSel.getDay()];
+            const snap = await getDoc(doc(db, "configuracion", diaNombre));
+            if (!snap.exists() || !snap.data().abierto) { msg.innerHTML = "Día no laborable."; document.getElementById('categorias-container').style.display = "none"; return; }
+            
+            msg.innerHTML = "Día disponible.";
+            const container = document.getElementById('categorias-container');
+            container.style.display = "block";
+            container.innerHTML = "<strong>Seleccione categoría:</strong><br>";
+            (await getDocs(collection(db, "categorias"))).forEach(d => container.innerHTML += `<button class="btn-cat" onclick="cargarSubs('${d.data().nombre}')">${d.data().nombre}</button>`);
         };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('panel-control').style.display = 'block';
-                window.cargarDatos();
-            } else {
-                document.getElementById('login-screen').style.display = 'block';
-                document.getElementById('panel-control').style.display = 'none';
-            }
-        });
-
-        window.cambiarOrden = async (id, nuevoOrden) => {
-            await updateDoc(doc(db, "Master_web", id), { orden: Number(nuevoOrden) });
+        window.cargarSubs = async (cat) => {
+            window.selCat = cat;
+            const container = document.getElementById('subcategorias-container');
+            container.style.display = "block";
+            container.innerHTML = "<strong>Seleccione servicio:</strong><br>";
+            (await getDocs(collection(db, "servicios"))).forEach(d => { if(d.data().categoria === cat) container.innerHTML += `<button class="btn-sub" onclick="prepararForm('${d.data().nombre}')">${d.data().nombre}</button>`; });
         };
-
-        window.cambiarEstado = async (id, nuevoEstado) => {
-            // Se envía el estado booleano directamente
-            await updateDoc(doc(db, "Master_web", id), { activo: nuevoEstado });
-            alert("Cambio guardado");
+        window.prepararForm = (sub) => { window.selSub = sub; document.getElementById('formulario-reserva').style.display = "block"; };
+        window.solicitarCita = async () => {
+            const datos = { fecha: document.getElementById('fecha-cita').value, nombre: document.getElementById('nombre').value, apellido: document.getElementById('apellido').value, telefono: document.getElementById('telefono').value, direccion: document.getElementById('direccion').value, categoria: window.selCat, subcategoria: window.selSub, hora: new Date().toLocaleTimeString() };
+            await addDoc(collection(db, "citas"), datos);
+            const numWpp = (await getDoc(doc(db, "configuracion", "whatsapp"))).data().numero;
+            window.open(`https://wa.me/${numWpp}?text=Solicitud de cita: ${datos.nombre} ${datos.apellido}, ${datos.subcategoria}`, '_blank');
+            location.reload();
         };
     </script>
 </body>
