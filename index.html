@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>111 Master Web - Panel Maestro</title>
+    <title>Master Web - Panel Maestro</title>
     <style>
         :root { --bg-color: #1a1a1a; --text-color: #f2f1ed; --card-bg: #282828; --border-color: #d4af37; }
         [data-theme="light"] { --bg-color: #f4f7f6; --text-color: #333; --card-bg: #ffffff; }
@@ -42,7 +42,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyA0DzUiklteZ4Iu1a3aRkCRr68jzuoTUyQ",
@@ -58,8 +58,10 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Configurar persistencia de sesión: se borra al recargar (F5)
-        setPersistence(auth, browserSessionPersistence);
+        // Cierre de sesión al recargar la página (F5)
+        window.addEventListener('beforeunload', () => {
+            signOut(auth);
+        });
 
         // Funciones de control de tema y sesión
         window.toggleTheme = () => {
