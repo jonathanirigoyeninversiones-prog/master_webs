@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ccc Master Web - Panel Maestro</title>
+    <title>Master Web - Panel Maestro</title>
     <style>
         :root { --bg-color: #1a1a1a; --text-color: #f2f1ed; --card-bg: #282828; --border-color: #d4af37; }
         [data-theme="light"] { --bg-color: #f4f7f6; --text-color: #333; --card-bg: #ffffff; }
@@ -69,7 +69,10 @@
             catch (e) { alert("Error de acceso: " + e.message); }
         };
 
-        window.logout = async () => { await signOut(auth); };
+        window.logout = async () => { 
+            await signOut(auth); 
+            document.getElementById('pass').value = ''; // Limpia la contraseña al cerrar sesión
+        };
 
         window.cargarDatos = async () => {
             try {
