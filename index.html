@@ -2,56 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Esta línea hace que la web sea responsiva y se ajuste a cualquier pantalla -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Web - Panel de Control</title>
-    <style>
+    <title>Master Web - Panel Maestro</title>
+    <style>ccc 
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; display: flex; justify-content: center; }
         .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { font-size: 18px; color: #333; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #d4af37; }
-        input:checked + .slider:before { transform: translateX(20px); }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .orden-input { width: 40px; padding: 5px; text-align: center; border: 1px solid #ddd; }
+        button { width: 100%; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; }
         #panel-control { display: none; }
     </style>
 </head>
 <body>
 
     <div class="card" id="login-screen">
-        <h1>Iniciar Sesión</h1>
-        <input type="email" id="email" placeholder="Correo electrónico">
+        <h1>Acceso Autorizado</h1>
+        <input type="email" id="email" placeholder="Correo">
         <input type="password" id="pass" placeholder="Contraseña">
         <button onclick="login()">Entrar</button>
     </div>
 
     <div class="card" id="panel-control">
-        <h1>Panel de Control Maestro</h1>
-        <table>
-            <tr>
-                <td>1. Albani Vegas</td>
-                <td style="text-align: right;">
-                    <label class="switch">
-                        <input type="checkbox" id="check-albani" onclick="cambiarEstado()">
-                        <span class="slider"></span>
-                    </label>
-                </td>
-            </tr>
+        <h1>Gestión de Proyectos</h1>
+        <table id="tabla-proyectos">
+            <!-- Los proyectos se cargarán aquí automáticamente -->
         </table>
-        <button onclick="logout()" style="background:#eee; color:#333; margin-top:20px;">Cerrar Sesión</button>
+        <button onclick="location.reload()">Actualizar lista</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyA0DzUiklteZ4Iu1a3aRkCRr68jzuoTUyQ",
@@ -66,33 +50,37 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const docRef = doc(db, "Master_web", "albani_vegas");
-        const checkbox = document.getElementById('check-albani');
 
         window.login = async () => {
-            const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('pass').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (e) { alert("Error de acceso: " + e.message); }
+            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value); }
+            catch (e) { alert("Error: " + e.message); }
         };
-
-        window.logout = () => signOut(auth);
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('panel-control').style.display = 'block';
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) checkbox.checked = docSnap.data().activo;
-            } else {
-                document.getElementById('login-screen').style.display = 'block';
-                document.getElementById('panel-control').style.display = 'none';
+                const q = query(collection(db, "Master_web"), orderBy("orden", "asc"));
+                const querySnapshot = await getDocs(q);
+                let html = "<tr><th>Orden</th><th>Proyecto</th><th>Activo</th></tr>";
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    html += `<tr>
+                        <td><input type="number" class="orden-input" value="${data.orden}" onchange="cambiarOrden('${doc.id}', this.value)"></td>
+                        <td>${data.nombre}</td>
+                        <td><input type="checkbox" ${data.activo ? 'checked' : ''} onchange="cambiarEstado('${doc.id}', this.checked)"></td>
+                    </tr>`;
+                });
+                document.getElementById('tabla-proyectos').innerHTML = html;
             }
         });
 
-        window.cambiarEstado = async () => {
-            await updateDoc(docRef, { activo: checkbox.checked });
+        window.cambiarOrden = async (id, nuevoOrden) => {
+            await updateDoc(doc(db, "Master_web", id), { orden: parseInt(nuevoOrden) });
+        };
+
+        window.cambiarEstado = async (id, estado) => {
+            await updateDoc(doc(db, "Master_web", id), { activo: estado });
         };
     </script>
 </body>
